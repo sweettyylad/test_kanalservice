@@ -69,14 +69,6 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        &.Sort{
-          &::after{
-            content:'';
-            background-image: url('../icons/arrow-right.svg');
-            width:16px;
-            height:16px;
-          }
-        }
       }
     }
 
