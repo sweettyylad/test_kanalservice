@@ -1,4 +1,5 @@
 const http = require('http')
+const fs = require("fs");
 const MongoClient = require("mongodb").MongoClient;
 const host = '127.0.0.1'
 const port = 7000
@@ -11,26 +12,28 @@ function notFound(res) {
 
 const client = new MongoClient("mongodb://localhost:27017/");
 
-async function getCollection() {
-    let info
-    try {
-        await client.connect();
-        const db = client.db("db");
-        const collection = db.collection("data");
-        info = await collection.find().toArray();
-        await client.close();
-    } catch (err) {
-        console.log(err);
-    } finally {
-        await client.close();
-    }
-    return info
-}
+// async function getCollection() {
+//     let info
+//     try {
+//         await client.connect();
+//         const db = client.db("db");
+//         const collection = db.collection("data");
+//         info = await collection.find().toArray();
+//         await client.close();
+//     } catch (err) {
+//         console.log(err);
+//     } finally {
+//         await client.close();
+//     }
+//     return info
+// }
+//
+// let inf;
+// getCollection().then(d => {
+//     inf = d
+// })
 
-let inf;
-getCollection().then(d => {
-    inf = d
-})
+let inf = JSON.parse(fs.readFileSync("db.json", "utf8"));
 
 const headers = {
     "Access-Control-Allow-Origin": "*",
