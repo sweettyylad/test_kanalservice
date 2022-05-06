@@ -31,6 +31,7 @@ let inf;
 getCollection().then(d => {
     inf = d
 })
+
 const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, GET",
