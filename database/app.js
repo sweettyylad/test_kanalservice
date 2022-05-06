@@ -1,6 +1,5 @@
 const http = require('http')
 const MongoClient = require("mongodb").MongoClient;
-// const client = new MongoClient("mongodb://localhost:27017/");
 const host = '127.0.0.1'
 const port = 7000
 
@@ -10,44 +9,28 @@ function notFound(res) {
     res.end('Not found\n')
 }
 
-// client.connect(function(err, client){
-//
-//     const db = client.db("db");
-//     const collection = db.collection("data");
-//
-//     collection.insertMany(users, function(err, results){
-//
-//         console.log(results);
-//         client.close();
-//     });
-//
-//
-// });
+const client = new MongoClient("mongodb://localhost:27017/");
 
-// async function getCollection() {
-//     let info
-//     try {
-//         await client.connect();
-//         const db = client.db("db");
-//         const collection = db.collection("data");
-//         info = await collection.find().toArray();
-//         await client.close();
-//     } catch (err) {
-//         console.log(err);
-//     } finally {
-//         await client.close();
-//     }
-//     return info
-// }
-//
-// let inf;
-// getCollection().then(d => {
-//     inf = d
-// })
+async function getCollection() {
+    let info
+    try {
+        await client.connect();
+        const db = client.db("db");
+        const collection = db.collection("data");
+        info = await collection.find().toArray();
+        await client.close();
+    } catch (err) {
+        console.log(err);
+    } finally {
+        await client.close();
+    }
+    return info
+}
 
-var fs = require('fs');
-var obj = JSON.parse(fs.readFileSync('db.json', 'utf8'));
-
+let inf;
+getCollection().then(d => {
+    inf = d
+})
 const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, GET",
@@ -60,10 +43,8 @@ http.createServer((req, res) => {
             switch (req.url) {
                 case '/info': {
                     let ans = {
-                        // msg:inf ? 'ok' : 'no',
-                        // inf: inf ? inf : obj
                         msg:'ok',
-                        inf:obj
+                        inf:inf
                     }
                     res.writeHead(200, headers);
                     res.end(JSON.stringify(ans))
