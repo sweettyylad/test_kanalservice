@@ -3,7 +3,7 @@ import Row from './Row'
 import {useEffect, useState} from "react";
 
 const isEmp = (str) => !str.trim().length; // Проверка строки на пустоту
-const gVal = (id) => document.getElementById(id).value // Получение значение из элемента
+const gVal = (id) => typeof id === 'string' ? document.getElementById(id).value : id.value // Получение значение из элемента
 function ObjsToJSX(objs){
     return objs.map(e => <Row key = {e._id} class = "Content" cells ={e}/>)
 } // Перевод полученных данных в табличные строки
@@ -14,10 +14,13 @@ async function getData(){
 } // Получение данных с сервера
 function Table() {
 
+    const icons = new Map(); icons.set('nw', '&#8195;');icons.set('ba', '&#8595;');icons.set('bd', '&#8593;');
+    const names = new Map(); names.set('distance', 'Расстояние');names.set('count', 'Количество');names.set('name', 'Название');
+
     const [global, setGlobal] = useState([]) // Хранит данные в первоначальном виде
     const [data, setData] = useState([]) // Отображаемое хранилище
-    const [page, setPage] = useState(1) // Без комментариева
-
+    const [page, setPage] = useState(1) // Без комментариев
+    const [buffer, setBuffer] = useState([]) // Хранит первоначальные данные для перехода к несортированному состоянию
 
     // Тут получаем данные с сервера при перевичном рендере
     useEffect(() => {
@@ -32,9 +35,21 @@ function Table() {
         setPage(1)
     }, [global])
 
+    // Сброс сортировки
+    function resetSort(){
+        Array.from(document.getElementsByClassName('Sort')).forEach(e => {
+            e.dataset.sort = 'nw'
+        })
+        Array.from(document.getElementsByClassName('Sort')).forEach(e => {
+            e.innerHTML = names.get(e.dataset.tag) + ' ' + icons.get(e.dataset.sort)
+        })
+    }
+
     // Сброс фильтров
     function reset() {
-        setData(global); document.getElementById('name').value = ''
+        document.getElementById('name').value = ''
+        resetSort()
+        setData([...global])
     }
 
     // Сортировка по одному из столбцов
@@ -42,42 +57,56 @@ function Table() {
         let column = e.target.closest('.HeaderCell')
         let type = column.dataset.sort === 'nw' ? 'ba' : (column.dataset.sort === 'ba') ? 'bd' : 'nw'
 
-        const icons = new Map(); icons.set('nw', '&#8195;');icons.set('ba', '&#8595;');icons.set('bd', '&#8593;');
-        const names = new Map(); names.set('distance', 'Расстояние');names.set('count', 'Количество');names.set('name', 'Название');
-
         Array.from(document.getElementsByClassName('Sort')).forEach(e => {
             e.dataset.sort = 'nw'
         })
         column.dataset.sort = type
         Array.from(document.getElementsByClassName('Sort')).forEach(e => {
             e.innerHTML = names.get(e.dataset.tag) + ' ' + icons.get(e.dataset.sort)
-            console.log(e.innerHTML)
         })
+        if(column.dataset.sort === 'ba'){
+            setBuffer([...data])
+        }
         if(column.dataset.sort === 'nw'){
-            setData([...global]);
+            setData([...buffer  ]);
             return;
         }
-
-        // console.log()
-        // setData(data.sort((prev,next) => prev[column.dataset.tag] - next[column.dataset.tag]))
 
         setData([...data.sort((prev, next) => {
             if ( prev[column.dataset.tag] < next[column.dataset.tag] ) return type === 'ba' ? -1 : 1;
             if ( prev[column.dataset.tag] > next[column.dataset.tag] ) return type === 'ba' ? 1 : -1;
         })])
-
-        console.log(data)
     }
 
     // Фильтрация
     function filter(){
-        if(!isEmp(gVal('name'))){
+        resetSort()
+        let [val, col, req] = [document.getElementById('name'),document.getElementById('column'),document.getElementById('req')]
+        if(!isEmp(gVal(val))){
             switch (gVal('column')){
                 case 'name':
                     switch(gVal('req')){
                         case 'incl': setData(global.filter((e) => e.name.toLowerCase().includes(gVal('name').trim().toLowerCase()))); break;
                         case 'equl': setData(global.filter((e) => e.name.toLowerCase() === gVal('name').trim().toLowerCase()));break;
-                        default: ;break;
+                        default:break;
+                    }
+                    break;
+                case 'count':case 'distance':
+                    switch(gVal('req')){
+                        case 'incl': setData(global.filter((e) => (e[gVal(col)]+'').includes(gVal('name').trim()))); break;
+                        case 'equl': setData(global.filter((e) => e[gVal(col)] === gVal('name').trim()));break;
+                        case 'bigg': setData(global.filter((e) => e[gVal(col)] > gVal('name').trim()));break;
+                        case 'less': setData(global.filter((e) => e[gVal(col)] < gVal('name').trim()));break;
+                        default:break;
+                    }
+                    break;
+                case 'date':
+                    switch(gVal('req')){
+                        case 'incl': setData(global.filter((e) => e.name.toLowerCase().includes(gVal('name').trim().toLowerCase()))); break;
+                        case 'equl': setData(global.filter((e) => e.name.toLowerCase() === gVal('name').trim().toLowerCase()));break;
+                        case 'bigg': setData(global.filter((e) => e.count > gVal('name').trim()));break;
+                        case 'less': setData(global.filter((e) => e.count > gVal('name').trim()));break;
+                        default:break;
                     }
                     break;
                 default: alert('Неизвестная ошибка!');break;
@@ -87,6 +116,7 @@ function Table() {
             alert('Заполните поля!')
         }
     }
+
     return (
         <div className="Table">
             <div className="Filter">
